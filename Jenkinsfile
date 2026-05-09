@@ -1,70 +1,91 @@
 pipeline {
-    // Forces the job to run specifically on your Slave node
+
     agent { label 'linux-worker' }
 
-    // Ensures GitHub webhooks automatically trigger this pipeline
     triggers {
         githubPush()
+    }
+
+    environment {
+        APP_NAME = "demo-app"
     }
 
     stages {
 
         stage('Checkout Code') {
             steps {
-                // Automatically pulls your code from GitHub into the Slave's workspace
+                echo "Pulling latest code from GitHub..."
                 checkout scm
             }
         }
 
         stage('Build Application') {
             steps {
-                // Replace this with your actual build command
-                echo "Compiling application..."
-                sh "echo 'Simulating compilation...' > my-app-v${env.BUILD_ID}.jar"
+                echo "Building application..."
+
+                sh """
+                    echo "Build started at $(date)" > ${APP_NAME}-${BUILD_NUMBER}.jar
+                    echo "Application compiled successfully" >> ${APP_NAME}-${BUILD_NUMBER}.jar
+                """
             }
         }
 
         stage('Run Tests') {
             steps {
-                // Runs tests automatically every time
-                echo "Starting unit tests..."
-                sh "echo 'Test Suite Completed Successfully!'"
+                echo "Running test cases..."
+
+                sh """
+                    echo "Executing unit tests..."
+                    echo "All tests passed successfully"
+                """
             }
         }
 
-        stage('Archive Artifacts') {
+        stage('Archive Artifact') {
             steps {
-                // Stores the build artifact
-                archiveArtifacts artifacts: '*.jar', allowEmptyArchive: true
+                echo "Archiving build artifact..."
+
+                archiveArtifacts artifacts: '*.jar', fingerprint: true
             }
         }
     }
 
-    // Handles email alerts
     post {
 
         success {
+            echo "Build completed successfully!"
+
             emailext(
                 to: 'arreeb18@gmail.com',
-                subject: "SUCCESS: Job '${env.JOB_NAME}' [${env.BUILD_NUMBER}]",
-                body: """Great news!
+                subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+Build completed successfully.
 
-The build and tests completed successfully.
+Job Name: ${env.JOB_NAME}
+Build Number: ${env.BUILD_NUMBER}
 
-You can download your build artifact here:
+Artifact Link:
 ${env.BUILD_URL}artifact/
 
-View Console Output:
-${env.BUILD_URL}""",
+Console Output:
+${env.BUILD_URL}console
+""",
                 attachLog: true
             )
         }
 
         failure {
+            echo "Build failed!"
+
             emailext(
                 to: 'arreeb18@gmail.com',
-                subject: "FAILED: Job '${env.JOB_NAME}' [${env.BUILD_NUMBER}]",
-                body: "The build failed. Please check the attached logs to troubleshoot.",
+                subject: "FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """
+Build failed.
+
+Check Console Output:
+${env.BUILD_URL}console
+""",
                 attachLog: true
             )
         }
