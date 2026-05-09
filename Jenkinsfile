@@ -24,7 +24,7 @@ pipeline {
                 echo "Building application..."
 
                 sh """
-                    echo "Build started at $(date)" > ${APP_NAME}-${BUILD_NUMBER}.jar
+                    echo "Build started at \$(date)" > ${APP_NAME}-${BUILD_NUMBER}.jar
                     echo "Application compiled successfully" >> ${APP_NAME}-${BUILD_NUMBER}.jar
                 """
             }
